@@ -47,7 +47,7 @@ class ModInstallerApp(tk.Tk):
                 latest_version = latest_info["tag_name"]
                 if installed_version:
                     if installed_version != latest_version:
-                        label = f"{mod['name']} (Installé: v{installed_version}, MAJ: v{latest_version})"
+                        label = f"{mod['name']} (Installé: {installed_version}, MAJ: {latest_version})"
                     else:
                         label = f"{mod['name']} ({installed_version})"
                 else:
