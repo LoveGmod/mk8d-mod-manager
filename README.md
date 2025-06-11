@@ -2,7 +2,7 @@
 Ce logiciel permet **d'installer / mettre à jour** les mods que je développe sur <ins>Mario Kart 8 Deluxe sous Ryujinx</ins>.
 
 L'utilisation est simple :
-  - Lancer l'exécutable disponible depuis la [**dernière release**](github.com/LoveGmod/mk8d-mod-manager/releases/latest)
+  - Lancer l'exécutable disponible depuis la [**dernière release**](https://github.com/LoveGmod/mk8d-mod-manager/releases/latest)
   - **Sélectionner** le mod à installer / mettre à jour
   - **Cliquer** sur "Installer le mod sélectionné"
   - Et voilà !
