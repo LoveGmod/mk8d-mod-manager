@@ -7,19 +7,21 @@ import webbrowser
 import subprocess
 import tempfile
 import os
+import back
 
-from back import install_mod
-
-CURRENT_VERSION = "1.1.0"
+CURRENT_VERSION = "1.1.2"
 
 class ModInstallerApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Mod Installer - Mario Kart 8 Deluxe")
+        self.icon_path = os.path.join(os.path.dirname(__file__), "icon.ico")
+        self.iconbitmap(self.icon_path)
         self.geometry("500x400")
         self.resizable(False, False)
 
         self.mods = self.load_mods()
+        self.installed_mods = back.load_installed_mods()
         self.create_widgets()
 
         self.after(1000, self.check_for_updates)
@@ -40,14 +42,58 @@ class ModInstallerApp(tk.Tk):
 
         self.listbox = tk.Listbox(self, font=("Helvetica", 12), height=10)
         for mod in self.mods:
-            self.listbox.insert(tk.END, mod["name"])
+            repo = mod["repo"]
+            installed_version = self.installed_mods.get(repo, {}).get("version")
+            try:
+                latest_info = back.get_latest_release_info(repo)
+                latest_version = latest_info["tag_name"]
+                if installed_version:
+                    if installed_version != latest_version:
+                        label = f"{mod['name']} (Installé: v{installed_version}, MAJ: v{latest_version})"
+                    else:
+                        label = f"{mod['name']} ({installed_version})"
+                else:
+                    label = f"{mod['name']} (Non installé)"
+            except Exception:
+                label = f"{mod['name']} (Erreur API)"
+        self.listbox.insert(tk.END, label)
+
         self.listbox.pack(padx=20, fill="x")
 
-        self.install_button = tk.Button(self, text="Installer le mod sélectionné", command=self.install_selected_mod)
-        self.install_button.pack(pady=10)
+        btn_frame = tk.Frame(self)
+        btn_frame.pack(pady=5)
+
+        self.install_button = tk.Button(btn_frame, text="Installer le mod sélectionné", command=self.install_selected_mod)
+        self.install_button.pack(side="left", padx=5)
+
+        self.uninstall_button = tk.Button(btn_frame, text="Supprimer le mod sélectionné", command=self.uninstall_selected_mod)
+        self.uninstall_button.pack(side="left", padx=5)
+
 
         self.progress = ttk.Progressbar(self, orient="horizontal", length=400, mode="determinate")
         self.progress.pack(pady=10)
+
+    def refresh_mod_list(self):
+        self.installed_mods = back.load_installed_mods()
+        self.listbox.delete(0, tk.END)
+
+        for mod in self.mods:
+            repo = mod["repo"]
+            installed_version = self.installed_mods.get(repo, {}).get("version")
+            try:
+                latest_info = back.get_latest_release_info(repo)
+                latest_version = latest_info["tag_name"]
+                if installed_version:
+                    if installed_version != latest_version:
+                        label = f"{mod['name']} (Installé: v{installed_version}, MAJ: v{latest_version})"
+                    else:
+                        label = f"{mod['name']} ({installed_version})"
+                else:
+                    label = f"{mod['name']} (Non installé)"
+            except Exception:
+                label = f"{mod['name']} (Erreur API)"
+            self.listbox.insert(tk.END, label)
+
 
     def install_selected_mod(self):
         selected = self.listbox.curselection()
@@ -68,13 +114,15 @@ class ModInstallerApp(tk.Tk):
 
     def install_mod_thread(self, mod):
         try:
-            install_mod(mod["repo"], self.update_progress)
+            back.install_mod(mod["repo"], self.update_progress)
             messagebox.showinfo("Succès", f"{mod['name']} installé avec succès !")
+            self.refresh_mod_list()
         except Exception as e:
             messagebox.showerror("Erreur", str(e))
         finally:
             self.install_button.config(state="normal")
             self.progress["value"] = 0
+
 
     def check_for_updates(self):
         try:
@@ -124,6 +172,38 @@ class ModInstallerApp(tk.Tk):
             self.quit()
         except Exception as e:
             messagebox.showerror("Erreur mise à jour", f"Impossible d'installer la mise à jour :\n{e}")
+
+    def uninstall_selected_mod(self):
+        selected = self.listbox.curselection()
+        if not selected:
+            messagebox.showwarning("Aucun mod sélectionné", "Veuillez sélectionner un mod à supprimer.")
+            return
+
+        mod = self.mods[selected[0]]
+        repo = mod["repo"]
+
+        if not self.installed_mods.get(repo):
+            messagebox.showinfo("Non installé", f"{mod['name']} n'est pas installé.")
+            return
+
+        confirm = messagebox.askyesno("Confirmation", f"Voulez-vous vraiment supprimer {mod['name']} ?")
+        if not confirm:
+            return
+
+        try:
+            from back import uninstall_mod_files, remove_installed_mod
+            success = uninstall_mod_files()
+            remove_installed_mod(repo)
+
+            if success:
+                messagebox.showinfo("Supprimé", f"{mod['name']} a été supprimé avec succès.")
+            else:
+                messagebox.showwarning("Déjà supprimé", "Le dossier du mod n'existe plus.")
+            
+            self.refresh_mod_list()
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Erreur lors de la suppression :\n{e}")
+
 
 
 
