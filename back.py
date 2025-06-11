@@ -3,6 +3,7 @@ import zipfile
 import os
 import shutil
 from io import BytesIO
+import tempfile
 
 def get_latest_release_zip_url(repo):
     api_url = f"https://api.github.com/repos/LoveGmod/{repo}/releases/latest"
@@ -42,15 +43,16 @@ def install_mod(repo, progress_callback=None):
     update_progress(40)
 
     print("Extraction")
+    temp_folder = os.path.join(tempfile.gettempdir(), "temp_mod")
     with zipfile.ZipFile(BytesIO(response.content)) as zip_file:
-        zip_file.extractall("temp_mod")
+        zip_file.extractall(temp_folder)
     update_progress(60)
 
     print("Installation")
     os.makedirs(install_path, exist_ok=True)
 
-    for item in os.listdir("temp_mod"):
-        s = os.path.join("temp_mod", item)
+    for item in os.listdir(temp_folder):
+        s = os.path.join(temp_folder, item)
         d = os.path.join(install_path, item)
         
         if os.path.isdir(s):
@@ -60,5 +62,5 @@ def install_mod(repo, progress_callback=None):
     update_progress(90)
 
     print("Mod installé avec succès")
-    shutil.rmtree("temp_mod")
+    shutil.rmtree(temp_folder, ignore_errors=True)
     update_progress(100)
