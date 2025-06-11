@@ -3,8 +3,14 @@ from tkinter import ttk, messagebox
 import json
 import threading
 import requests
+import webbrowser
+import subprocess
+import tempfile
+import os
 
 from back import install_mod
+
+CURRENT_VERSION = "1.1.0"
 
 class ModInstallerApp(tk.Tk):
     def __init__(self):
@@ -15,6 +21,8 @@ class ModInstallerApp(tk.Tk):
 
         self.mods = self.load_mods()
         self.create_widgets()
+
+        self.after(1000, self.check_for_updates)
 
     def load_mods(self):
         try:
@@ -67,6 +75,57 @@ class ModInstallerApp(tk.Tk):
         finally:
             self.install_button.config(state="normal")
             self.progress["value"] = 0
+
+    def check_for_updates(self):
+        try:
+             url = f"https://api.github.com/repos/LoveGmod/mk8d-mod-manager/releases/latest"
+             
+             r = requests.get(url)
+             r.raise_for_status()
+
+             latest = r.json()
+             latest_version = latest["tag_name"].lstrip("v")
+
+             if latest_version != CURRENT_VERSION:
+                 if "[force-update]" in latest.get("body", "").lower():
+                    messagebox.showinfo("Mise à jour obligatoire", f"La version {latest_version} est obligatoire.\nElle va être installée maintenant.")
+                    self.download_and_install(latest)
+                 else:
+                    if messagebox.askyesno(
+                     "Mise à jour disponible",
+                     f"Une nouvelle version ({latest_version}) est disponible.\nSouhaitez-vous la télécharger ?"
+                 ):
+                     self.download_and_install(latest)
+        except Exception as e:
+            print(f"Erreur vérification mise à jour : {e}")
+
+    def download_and_install(self, release_data):
+        try:
+            assets = release_data.get("assets", [])
+            installer_asset = next((a for a in assets if a["name"].endswith(".exe")), None)
+
+            if not installer_asset:
+                messagebox.showerror("Erreur", "Aucun installateur trouvé dans la release.")
+                return
+            
+            url = installer_asset["browser_download_url"]
+
+            temp_dir = tempfile.gettempdir()
+            installer_path = os.path.join(temp_dir, installer_asset["name"])
+            with open(installer_path, "wb") as f:
+                r = requests.get(url, stream=True)
+                r.raise_for_status()
+                
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+            subprocess.Popen([installer_path])
+
+            self.quit()
+        except Exception as e:
+            messagebox.showerror("Erreur mise à jour", f"Impossible d'installer la mise à jour :\n{e}")
+
+
 
 
 if __name__ == "__main__":
