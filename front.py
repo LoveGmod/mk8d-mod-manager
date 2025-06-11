@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import json
 import threading
+import requests
 
 from back import install_mod
 
@@ -16,9 +17,14 @@ class ModInstallerApp(tk.Tk):
         self.create_widgets()
 
     def load_mods(self):
-        with open("mods.json", "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return data["mods"]
+        try:
+            r = requests.get("https://raw.githubusercontent.com/LoveGmod/mk8d-mod-manager/main/mods.json")
+            r.raise_for_status()
+            data = r.json()
+            return data["mods"]
+        except Exception as e:
+            messagebox.showerror("Erreur de chargement", f"Impossible de charger la liste des mods :\n{e}")
+            self.quit()
 
     def create_widgets(self):
         title = tk.Label(self, text="Sélectionnez un mod à installer :", font=("Helvetica", 14))
