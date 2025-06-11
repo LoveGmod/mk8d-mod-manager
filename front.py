@@ -9,7 +9,7 @@ import tempfile
 import os
 import back
 
-CURRENT_VERSION = "1.1.2"
+CURRENT_VERSION = "1.1.3"
 
 class ModInstallerApp(tk.Tk):
     def __init__(self):
