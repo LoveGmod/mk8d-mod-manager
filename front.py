@@ -14,9 +14,7 @@ CURRENT_VERSION = "1.1.2"
 class ModInstallerApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Mod Installer - Mario Kart 8 Deluxe")
-        self.icon_path = os.path.join(os.path.dirname(__file__), "icon.ico")
-        self.iconbitmap(self.icon_path)
+        self.title(f"LG MK8D Mod Manager - v{CURRENT_VERSION}")
         self.geometry("500x400")
         self.resizable(False, False)
 
