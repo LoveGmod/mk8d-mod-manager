@@ -3,6 +3,10 @@
         {
             "name": "Course 1",
             "repo": "MK8D_Course1"
+        },
+        {
+            "name": "Traduction TeamChakal",
+            "repo": "MK8D_TeamChakal_Traduction"
         }
     ]
 }
