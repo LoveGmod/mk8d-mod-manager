@@ -9,7 +9,7 @@ import tempfile
 import os
 import back
 
-CURRENT_VERSION = "1.1.3"
+CURRENT_VERSION = "1.1.4"
 
 class ModInstallerApp(tk.Tk):
     def __init__(self):
@@ -54,7 +54,7 @@ class ModInstallerApp(tk.Tk):
                     label = f"{mod['name']} (Non installé)"
             except Exception:
                 label = f"{mod['name']} (Erreur API)"
-        self.listbox.insert(tk.END, label)
+            self.listbox.insert(tk.END, label)
 
         self.listbox.pack(padx=20, fill="x")
 
@@ -66,7 +66,6 @@ class ModInstallerApp(tk.Tk):
 
         self.uninstall_button = tk.Button(btn_frame, text="Supprimer le mod sélectionné", command=self.uninstall_selected_mod)
         self.uninstall_button.pack(side="left", padx=5)
-
 
         self.progress = ttk.Progressbar(self, orient="horizontal", length=400, mode="determinate")
         self.progress.pack(pady=10)
@@ -91,7 +90,6 @@ class ModInstallerApp(tk.Tk):
             except Exception:
                 label = f"{mod['name']} (Erreur API)"
             self.listbox.insert(tk.END, label)
-
 
     def install_selected_mod(self):
         selected = self.listbox.curselection()
@@ -121,27 +119,25 @@ class ModInstallerApp(tk.Tk):
             self.install_button.config(state="normal")
             self.progress["value"] = 0
 
-
     def check_for_updates(self):
         try:
-             url = f"https://api.github.com/repos/LoveGmod/mk8d-mod-manager/releases/latest"
-             
-             r = requests.get(url)
-             r.raise_for_status()
+            url = f"https://api.github.com/repos/LoveGmod/mk8d-mod-manager/releases/latest"
+            r = requests.get(url)
+            r.raise_for_status()
 
-             latest = r.json()
-             latest_version = latest["tag_name"].lstrip("v")
+            latest = r.json()
+            latest_version = latest["tag_name"].lstrip("v")
 
-             if latest_version != CURRENT_VERSION:
-                 if "[force-update]" in latest.get("body", "").lower():
+            if latest_version != CURRENT_VERSION:
+                if "[force-update]" in latest.get("body", "").lower():
                     messagebox.showinfo("Mise à jour obligatoire", f"La version {latest_version} est obligatoire.\nElle va être installée maintenant.")
                     self.download_and_install(latest)
-                 else:
+                else:
                     if messagebox.askyesno(
-                     "Mise à jour disponible",
-                     f"Une nouvelle version ({latest_version}) est disponible.\nSouhaitez-vous la télécharger ?"
-                 ):
-                     self.download_and_install(latest)
+                        "Mise à jour disponible",
+                        f"Une nouvelle version ({latest_version}) est disponible.\nSouhaitez-vous la télécharger ?"
+                    ):
+                        self.download_and_install(latest)
         except Exception as e:
             print(f"Erreur vérification mise à jour : {e}")
 
@@ -166,7 +162,6 @@ class ModInstallerApp(tk.Tk):
                     f.write(chunk)
 
             subprocess.Popen([installer_path])
-
             self.quit()
         except Exception as e:
             messagebox.showerror("Erreur mise à jour", f"Impossible d'installer la mise à jour :\n{e}")
@@ -190,7 +185,7 @@ class ModInstallerApp(tk.Tk):
 
         try:
             from back import uninstall_mod_files, remove_installed_mod
-            success = uninstall_mod_files()
+            success = uninstall_mod_files(repo)
             remove_installed_mod(repo)
 
             if success:
@@ -201,9 +196,6 @@ class ModInstallerApp(tk.Tk):
             self.refresh_mod_list()
         except Exception as e:
             messagebox.showerror("Erreur", f"Erreur lors de la suppression :\n{e}")
-
-
-
 
 
 if __name__ == "__main__":

@@ -42,8 +42,10 @@ def remove_installed_mod(repo):
         with open(MODS_DB_PATH, "w", encoding="utf-8") as f:
             json.dump(mods, f, indent=4)
 
-def uninstall_mod_files():
-    install_path = os.path.join(os.getenv("APPDATA"), "Ryujinx/mods/contents/0100152000022000")
+def uninstall_mod_files(repo):
+    """Supprime uniquement le dossier correspondant au mod donné"""
+    base_path = os.path.join(os.getenv("APPDATA"), "Ryujinx/mods/contents/0100152000022000")
+    install_path = os.path.join(base_path, repo)
     if os.path.exists(install_path):
         shutil.rmtree(install_path)
         return True
@@ -56,11 +58,12 @@ def install_mod(repo, progress_callback=None):
 
     update_progress(5)
 
-    install_path = os.path.join(os.getenv("APPDATA"), "Ryujinx/mods/contents/0100152000022000")
+    base_path = os.path.join(os.getenv("APPDATA"), "Ryujinx/mods/contents/0100152000022000")
+    install_path = os.path.join(base_path, repo)
 
-    if os.path.exists(install_path) and any(os.scandir(install_path)):
+    if os.path.exists(install_path):
         update_progress(10)
-        print("Le mod est déjà installé, mise à jour en cours")
+        print(f"Le mod {repo} est déjà installé, mise à jour en cours")
         shutil.rmtree(install_path)
 
     update_progress(20)
@@ -74,26 +77,30 @@ def install_mod(repo, progress_callback=None):
     update_progress(40)
 
     print("Extraction")
-    temp_folder = os.path.join(tempfile.gettempdir(), "temp_mod")
+    temp_folder = os.path.join(tempfile.gettempdir(), f"temp_mod_{repo}")
+    if os.path.exists(temp_folder):
+        shutil.rmtree(temp_folder)
     with zipfile.ZipFile(BytesIO(response.content)) as zip_file:
         zip_file.extractall(temp_folder)
     update_progress(60)
 
     print("Installation")
-    os.makedirs(install_path, exist_ok=True)
+    os.makedirs(base_path, exist_ok=True)
 
-    for item in os.listdir(temp_folder):
-        s = os.path.join(temp_folder, item)
-        d = os.path.join(install_path, item)
+    extracted_items = os.listdir(temp_folder)
+    if len(extracted_items) == 1 and os.path.isdir(os.path.join(temp_folder, extracted_items[0])):
+        extracted_root = os.path.join(temp_folder, extracted_items[0])
+    else:
+        extracted_root = temp_folder
 
-        if os.path.isdir(s):
-            shutil.copytree(s, d, dirs_exist_ok=True)
-        else:
-            shutil.copy(s, d)
+    shutil.move(extracted_root, install_path)
 
     update_progress(90)
 
-    print("Mod installé avec succès")
+    print(f"Mod {repo} installé avec succès")
     save_installed_mod(repo, version)
-    shutil.rmtree(temp_folder, ignore_errors=True)
+
+    if os.path.exists(temp_folder):
+        shutil.rmtree(temp_folder, ignore_errors=True)
+
     update_progress(100)
